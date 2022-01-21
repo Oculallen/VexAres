@@ -22,9 +22,74 @@
 #include "vex.h"
 
 using namespace vex;
+#include <cmath>
 
 competition Competition;
 
+class Coord{
+  public:
+    int x;
+    int y;
+
+    Coord(int nx, int ny){
+      x = nx;
+      y = ny;
+    }
+};
+
+class FieldMap{
+  //20 x 20 pitch
+  //Square worth 4 coord
+  //sqaure 600mm
+  //1 coord 150mm same as base radius
+  public:
+    Coord ROBOT = Coord(0, 0);
+    double rAngle = 0;
+
+    const Coord BIG_MID = Coord(10, 10);
+    const Coord LEFT_MID = Coord(4, 10);
+    const Coord RIGHT_MID = Coord(16, 10);
+    const Coord ALLIANCE_PLAT = Coord(15, 0);
+    const Coord ALLAIANCE_FLOOR = Coord(0, 4);
+
+    void moveToCoords(vex::drivetrain drv, Coord dest, double vel){
+      double distToMove = calcDistance(dest);
+      double angleToTurn = calcAngle(dest);
+      drv.turnFor(angleToTurn, rotationUnits::deg, vel, velocityUnits::pct);
+      drv.driveFor(distToMove, distanceUnits::mm, vel, velocityUnits::pct);
+      ROBOT = dest;
+    }
+
+    FieldMap(Coord nRobot, double nAngle){
+      ROBOT = nRobot;
+      rAngle = nAngle;
+    };
+
+  private:
+    double calcDistance(Coord dest){
+      double dist;
+
+      dist = pow((dest.x - ROBOT.x), 2) + pow((dest.y - ROBOT.y), 2);
+      dist = sqrt(dist);
+
+      return dist;
+    }
+
+    double calcAngle(Coord dest){
+      double ang;
+      double dist;
+      double ydist = dest.y-ROBOT.y;
+
+      dist = calcDistance(dest);
+      ang = cos(ydist/dist);
+
+      if (ROBOT.x > dest.x) {
+        ang = ang - (ang*2);
+      }
+
+      return ang;
+    }
+};
 
 // a big ugly block of driving constants
 // dw mos it doesn't look too bad
@@ -40,6 +105,7 @@ const double LIFT_STICKMAX = 100;
 const double GRIP_VEL = 50;
 const double MINILIFT_VEL = 100;
 const double LIFTGRIP_VEL = 100;
+const double COORD_SPACE = 150  ;
 // Morg needs to do testing on this tonight
 const double MINILIFT_DOWN = 100;
 const double LIFT_UP = 100;
@@ -54,6 +120,10 @@ double linterp(double y0, double y1, double x, double x0, double x1) {
   return (y0 * (x1 - x) + y1 * (x - x0)) / (x1 - x0);
 }
 
+// Move To Coordinates
+void moveToCoords(vex::drivetrain drv){
+
+}
 
 void coastdrive() {
   LeftDriveSmart.setStopping(coast);
@@ -228,6 +298,10 @@ void motorSetup(){
   // Nudge section to make sure nothing collides with anything nasty (mostly that darn side gripper)
   setMotorPos(gripper, 5, GRIP_VEL); // setGripPos(5, GRIP_VEL);
   setMotorPos(lift, -2, MIN_LIFT_VEL); // setLiftPos(-2, MIN_LIFT_VEL);
+  setMotorPos(minilift, 10, MINILIFT_VEL);
+  gripper.resetPosition();
+  lift.resetPosition();
+  minilift.resetPosition();
 }
 
 void pre_auton(void) {
@@ -237,6 +311,7 @@ void pre_auton(void) {
   gripper.setVelocity(GRIP_VEL, percent);
   minilift.setVelocity(MINILIFT_VEL, percent);
   liftgrip.setVelocity(LIFTGRIP_VEL, percent);
+  motorSetup();
 }
 
 
@@ -244,6 +319,16 @@ void auton(void) {
   holddrive();
 }
 
+/// Left side of pitch
+// - Moves forward with MOGO to get right mid
+// - Moves back to get blue plat
+///
+void autonSeqOne(void){
+  FieldMap map(Coord(20, 0), 0);
+  minilift.startRotateFor(fwd, 30, rotationUnits::deg);
+  
+  map.moveToCoords(Drivetrain, map.RIGHT_MID, 50);
+}
 
 void usercontrol(void) {
   coastdrive();
@@ -271,7 +356,7 @@ void usercontrol(void) {
 
 
 int main() {
-  Competition.autonomous(auton);
+  Competition.autonomous(autonSeqOne);
   Competition.drivercontrol(usercontrol);
 
   pre_auton();
