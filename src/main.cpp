@@ -164,39 +164,15 @@ void genericMotorControl(vex::motor& mtr, bool btnUp, bool btnDown) {
   }
 }
 
-// Big ugly block of motor set functions
-void set_minilift(int input){
-  minilift.spin(fwd, input*SCALE, voltageUnits::mV);
+
+void setMotor(vex::motor& mtr, int input) {
+  mtr.spin(fwd, input*SCALE, voltageUnits::mV);
 }
 
-void set_lift(int input){
-  lift.spin(fwd, input*SCALE, voltageUnits::mV);
+void setMotorPos(vex::motor& mtr, int pos, double speed) {
+  mtr.startRotateTo(pos, rotationUnits::deg, speed, velocityUnits::pct);
 }
 
-void set_liftgrip(int input){
-  liftgrip.spin(fwd, input*SCALE, voltageUnits::mV);
-}
-
-void set_gripper(int input){
-  gripper.spin(fwd, input*SCALE, voltageUnits::mV);
-}
-
-// Slightly nicer block of motor moving commands
-void setMogoPos(int pos, double speed) {
-  minilift.startRotateTo(pos, rotationUnits::deg, speed, velocityUnits::pct);
-}
-
-void setLiftPos(int pos, double speed) {
-  lift.startRotateTo(pos, rotationUnits::deg, speed, velocityUnits::pct);
-}
-
-void setLiftGripPos(int pos, double speed) {
-  liftgrip.startRotateTo(pos, rotationUnits::deg, speed, velocityUnits::pct);
-}
-
-void setGripPos(int pos, double speed) {
-  gripper.startRotateTo(pos, rotationUnits::deg, speed, velocityUnits::pct);
-}
 
 // DOGO inspired motor reset so the robot knows where everything is
 void motorSetup(){
@@ -208,27 +184,27 @@ void motorSetup(){
 
   // Setting all motors apart from gripper moving
   // Since gripper is in a bit of a awkward position to move immediatly before the MOGO
-  set_minilift(50);
-  set_lift(-20);
-  set_liftgrip(-40);
+  setMotor(minilift, 50); // set_minilift(50);
+  setMotor(lift, -20); // set_lift(-20);
+  setMotor(liftgrip, -40); // set_liftgrip(-40);
 
   // Reset main motors to their backstop
   wait(100, timeUnits::msec);
   while (RESET){
     if (minilift.velocity(percentUnits::pct) < 0.8) {
-      set_minilift(0);
+      setMotor(minilift, 0); // set_minilift(0);
       mini_zero = true;
       minilift.resetPosition();
     }
 
     if (lift.velocity(percentUnits::pct) < 0.8) {
-      set_lift(0);
+      setMotor(lift, 0); // set_lift(0);
       lift_zero = true;
       lift.resetPosition();
     }
 
     if (liftgrip.velocity(percentUnits::pct) < 0.8) {
-      set_liftgrip(0);
+      setMotor(liftgrip, 0); // set_liftgrip(0);
       liftgrip_zero = true;
       liftgrip.resetPosition();
     }
@@ -239,19 +215,19 @@ void motorSetup(){
   }
 
   // Set Gripper position after init setup
-  set_gripper(-10);
+  setMotor(gripper, -10); // set_gripper(-10);
   wait(50, msec);
   while (set_grip) {
     if (gripper.velocity(percentUnits::pct) < 0.8) {
-      set_gripper(0);
+      setMotor(gripper, 0); // set_gripper(0);
       set_grip = false;
       gripper.resetPosition();
     }
   }
 
   // Nudge section to make sure nothing collides with anything nasty (mostly that darn side gripper)
-  setGripPos(5, GRIP_VEL);
-  setLiftPos(-2, MIN_LIFT_VEL);
+  setMotorPos(gripper, 5, GRIP_VEL); // setGripPos(5, GRIP_VEL);
+  setMotorPos(lift, -2, MIN_LIFT_VEL); // setLiftPos(-2, MIN_LIFT_VEL);
 }
 
 void pre_auton(void) {
