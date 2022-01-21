@@ -71,6 +71,7 @@ class FieldMap{
 
       dist = pow((dest.x - ROBOT.x), 2) + pow((dest.y - ROBOT.y), 2);
       dist = sqrt(dist);
+      
 
       return dist;
     }
@@ -82,6 +83,7 @@ class FieldMap{
 
       dist = calcDistance(dest);
       ang = cos(ydist/dist);
+      ang = ang * 30;
 
       if (ROBOT.x > dest.x) {
         ang = ang - (ang*2);
@@ -118,11 +120,6 @@ const int SCALE = 120;
 
 double linterp(double y0, double y1, double x, double x0, double x1) {
   return (y0 * (x1 - x) + y1 * (x - x0)) / (x1 - x0);
-}
-
-// Move To Coordinates
-void moveToCoords(vex::drivetrain drv){
-
 }
 
 void coastdrive() {
@@ -311,7 +308,7 @@ void pre_auton(void) {
   gripper.setVelocity(GRIP_VEL, percent);
   minilift.setVelocity(MINILIFT_VEL, percent);
   liftgrip.setVelocity(LIFTGRIP_VEL, percent);
-  motorSetup();
+  //motorSetup();
 }
 
 
@@ -325,9 +322,9 @@ void auton(void) {
 ///
 void autonSeqOne(void){
   FieldMap map(Coord(20, 0), 0);
-  minilift.startRotateFor(fwd, 30, rotationUnits::deg);
+  minilift.spinFor(1500, rotationUnits::deg);
   
-  map.moveToCoords(Drivetrain, map.RIGHT_MID, 50);
+  map.moveToCoords(Drivetrain, map.RIGHT_MID, 70);
 }
 
 void usercontrol(void) {
