@@ -56,7 +56,7 @@ class FieldMap{
     void moveToCoords(vex::drivetrain drv, Coord dest, double vel){
       double distToMove = calcDistance(dest);
       double angleToTurn = calcAngle(dest);
-      drv.turnFor(angleToTurn, rotationUnits::deg, vel, velocityUnits::pct);
+      drv.turnFor(-20, rotationUnits::deg, vel, velocityUnits::pct);
       drv.driveFor(distToMove, distanceUnits::mm, vel, velocityUnits::pct);
       ROBOT = dest;
     }
@@ -88,7 +88,14 @@ class FieldMap{
 
       double angleRadian = atan2(X, Y);
       ang = angleRadian * 180 / M_PI;
+      ang = 360-ang;
 
+      if (ang < 0) {
+        ang = ang +(ang*2);
+      }
+      else{
+        ang = ang - (ang*2);
+      }
       return ang;
     }
 };
@@ -317,13 +324,13 @@ void auton(void) {
   holddrive();
 }
 
-/// Left side of pitch
+/// Right side of pitch
 // - Moves forward with MOGO to get right mid
 // - Moves back to get blue plat
 ///
 void autonSeqOne(void){
   FieldMap map(Coord(20, 0), 0);
-  minilift.startRotateFor(fwd, MINILIFT_DOWN, rotationUnits::deg);
+  minilift.spinTo(1500, rotationUnits::deg);
   
   map.moveToCoords(Drivetrain, map.RIGHT_MID, 70);
 }
