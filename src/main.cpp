@@ -1,3 +1,14 @@
+// ---- START VEXCODE CONFIGURED DEVICES ----
+// Robot Configuration:
+// [Name]               [Type]        [Port(s)]
+// Drivetrain           drivetrain    19, 18, 20, 17  
+// Controller1          controller                    
+// gripper              motor         12              
+// liftgrip             motor         15              
+// lift                 motor         14              
+// minilift             motor         16              
+// Inertial10           inertial      10              
+// ---- END VEXCODE CONFIGURED DEVICES ----
 /*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*    Module:       main.cpp                                                  */
@@ -49,15 +60,15 @@ class FieldMap{
 
     const Coord BIG_MID = Coord(10, 10);
     const Coord LEFT_MID = Coord(4, 10);
-    const Coord RIGHT_MID = Coord(16, 10);
+    const Coord RIGHT_MID = Coord(17, 10);
     const Coord ALLIANCE_PLAT = Coord(15, 0);
     const Coord ALLAIANCE_FLOOR = Coord(0, 4);
 
     void moveToCoords(vex::drivetrain drv, Coord dest, double vel){
       double distToMove = calcDistance(dest);
       double angleToTurn = calcAngle(dest);
-      drv.turnFor(-20, rotationUnits::deg, vel, velocityUnits::pct);
-      drv.driveFor(distToMove, distanceUnits::mm, vel, velocityUnits::pct);
+      drv.turnFor(angleToTurn, rotationUnits::deg, vel, velocityUnits::pct);
+      drv.driveFor(distToMove, distanceUnits::cm, vel, velocityUnits::pct);
       ROBOT = dest;
     }
 
@@ -76,6 +87,13 @@ class FieldMap{
       double y = pow(Y, 2);
 
       dist = sqrt(x + y);
+      if (dist < 0){
+        dist = dist + (dist*-2);
+      }
+      else {
+        dist = dist - (dist*2);
+      }
+      dist = dist * 12;
 
       return dist;
     }
@@ -87,14 +105,15 @@ class FieldMap{
       double Y = ROBOT.y - dest.y;
 
       double angleRadian = atan2(X, Y);
-      ang = angleRadian * 180 / M_PI;
+      ang = angleRadian * (180 / M_PI);
       ang = 360-ang;
 
       if (ang < 0) {
-        ang = ang +(ang*2);
+        ang = ang + (ang*-2);
       }
       else{
         ang = ang - (ang*2);
+        ang = ang+180;
       }
       return ang;
     }
@@ -333,6 +352,7 @@ void autonSeqOne(void){
   minilift.spinTo(1500, rotationUnits::deg);
   
   map.moveToCoords(Drivetrain, map.RIGHT_MID, 70);
+  minilift.spinTo(1200, rotationUnits::deg);
 }
 
 void usercontrol(void) {
