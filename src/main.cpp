@@ -20,6 +20,7 @@
 // ---- END VEXCODE CONFIGURED DEVICES ----
 
 #include "vex.h"
+#include <stdlib.h>
 
 using namespace vex;
 #include <cmath>
@@ -38,7 +39,7 @@ class Coord{
 };
 
 class FieldMap{
-  //20 x 20 pitch
+  //20 x 20 pitch (0-20)
   //Square worth 4 coord
   //sqaure 600mm
   //1 coord 150mm same as base radius
@@ -69,25 +70,24 @@ class FieldMap{
     double calcDistance(Coord dest){
       double dist;
 
-      dist = pow((dest.x - ROBOT.x), 2) + pow((dest.y - ROBOT.y), 2);
-      dist = sqrt(dist);
-      
+      double X = ROBOT.x - dest.x;
+      double Y = ROBOT.y - dest.y;
+      double x = pow(X, 2);
+      double y = pow(Y, 2);
+
+      dist = sqrt(x + y);
 
       return dist;
     }
 
     double calcAngle(Coord dest){
       double ang;
-      double dist;
-      double ydist = dest.y-ROBOT.y;
+      
+      double X = ROBOT.x - dest.x;
+      double Y = ROBOT.y - dest.y;
 
-      dist = calcDistance(dest);
-      ang = cos(ydist/dist);
-      ang = ang * 30;
-
-      if (ROBOT.x > dest.x) {
-        ang = ang - (ang*2);
-      }
+      double angleRadian = atan2(X, Y);
+      ang = angleRadian * 180 / M_PI;
 
       return ang;
     }
@@ -109,7 +109,8 @@ const double MINILIFT_VEL = 100;
 const double LIFTGRIP_VEL = 100;
 const double COORD_SPACE = 150  ;
 // Morg needs to do testing on this tonight
-const double MINILIFT_DOWN = 100;
+// morg did not do testing on this
+const double MINILIFT_DOWN = 25;
 const double LIFT_UP = 100;
 const double LIFTGRIP_DOWN = 100;
 const double LIFTGRIP_UP = 20;
@@ -322,7 +323,7 @@ void auton(void) {
 ///
 void autonSeqOne(void){
   FieldMap map(Coord(20, 0), 0);
-  minilift.spinFor(1500, rotationUnits::deg);
+  minilift.startRotateFor(fwd, MINILIFT_DOWN, rotationUnits::deg);
   
   map.moveToCoords(Drivetrain, map.RIGHT_MID, 70);
 }
