@@ -67,9 +67,10 @@ class FieldMap{
     void moveToCoords(vex::drivetrain drv, Coord dest, double vel){
       double distToMove = calcDistance(dest);
       double angleToTurn = calcAngle(dest);
-      drv.turnFor(angleToTurn, rotationUnits::deg, vel, velocityUnits::pct);
+      drv.turnFor((angleToTurn-rAngle), rotationUnits::deg, vel, velocityUnits::pct);
       drv.driveFor(distToMove, distanceUnits::cm, vel, velocityUnits::pct);
       ROBOT = dest;
+      rAngle = sqrt(pow(angleToTurn, 2));
     }
 
     FieldMap(Coord nRobot, double nAngle){
@@ -115,6 +116,7 @@ class FieldMap{
         ang = ang - (ang*2);
         ang = ang+180;
       }
+
       return ang;
     }
 };
@@ -349,11 +351,12 @@ void auton(void) {
 ///
 void autonSeqOne(void){
   FieldMap map(Coord(20, 0), 0);
-  minilift.spinTo(1500, rotationUnits::deg);
+  setMotorPos(minilift, 1500, 110);
   
   map.moveToCoords(Drivetrain, map.RIGHT_MID, 70);
-  minilift.spinTo(1200, rotationUnits::deg);
-}
+  minilift.spinTo(1100, rotationUnits::deg, 60, velocityUnits::pct);
+  map.moveToCoords(Drivetrain, Coord(17, 0), 30);
+} 
 
 void usercontrol(void) {
   coastdrive();
