@@ -32,94 +32,12 @@
 
 #include "vex.h"
 #include <stdlib.h>
+#include "autonControl.cpp"
 
 using namespace vex;
 #include <cmath>
 
 competition Competition;
-
-class Coord{
-  public:
-    int x;
-    int y;
-
-    Coord(int nx, int ny){
-      x = nx;
-      y = ny;
-    }
-};
-
-class FieldMap{
-  //20 x 20 pitch (0-20)
-  //Square worth 4 coord
-  //sqaure 600mm
-  //1 coord 150mm same as base radius
-  public:
-    Coord ROBOT = Coord(0, 0);
-    double rAngle = 0;
-
-    const Coord BIG_MID = Coord(10, 10);
-    const Coord LEFT_MID = Coord(4, 10);
-    const Coord RIGHT_MID = Coord(17, 10);
-    const Coord ALLIANCE_PLAT = Coord(15, 0);
-    const Coord ALLAIANCE_FLOOR = Coord(0, 4);
-
-    void moveToCoords(vex::drivetrain drv, Coord dest, double vel){
-      double distToMove = calcDistance(dest);
-      double angleToTurn = calcAngle(dest);
-      drv.turnFor((angleToTurn-rAngle), rotationUnits::deg, vel, velocityUnits::pct);
-      drv.driveFor(distToMove, distanceUnits::cm, vel, velocityUnits::pct);
-      ROBOT = dest;
-      rAngle = sqrt(pow(angleToTurn, 2));
-    }
-
-    FieldMap(Coord nRobot, double nAngle){
-      ROBOT = nRobot;
-      rAngle = nAngle;
-    };
-
-  private:
-    double calcDistance(Coord dest){
-      double dist;
-
-      double X = ROBOT.x - dest.x;
-      double Y = ROBOT.y - dest.y;
-      double x = pow(X, 2);
-      double y = pow(Y, 2);
-
-      dist = sqrt(x + y);
-      if (dist < 0){
-        dist = dist + (dist*-2);
-      }
-      else {
-        dist = dist - (dist*2);
-      }
-      dist = dist * 12;
-
-      return dist;
-    }
-
-    double calcAngle(Coord dest){
-      double ang;
-      
-      double X = ROBOT.x - dest.x;
-      double Y = ROBOT.y - dest.y;
-
-      double angleRadian = atan2(X, Y);
-      ang = angleRadian * (180 / M_PI);
-      ang = 360-ang;
-
-      if (ang < 0) {
-        ang = ang + (ang*-2);
-      }
-      else{
-        ang = ang - (ang*2);
-        ang = ang+180;
-      }
-
-      return ang;
-    }
-};
 
 // a big ugly block of driving constants
 // dw mos it doesn't look too bad
