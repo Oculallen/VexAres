@@ -35,29 +35,29 @@ class FieldMap{
       // Big Block of angle checking code, pls don't touch otherwise i'll get mad.
       if (ROBOT.x > dest.x && ROBOT.y < dest.y) {
         ang = ang - (ang*2);
-        if (rAngle != 0) {
-          ang = 360 + ang - rAngle;
-        }
+        // if (rAngle != 0) {
+        //   ang = 360 + ang - rAngle;
+        // }
       }
       else if (ROBOT.x < dest.x && ROBOT.y > dest.y) {
         ang = ang - (ang*2);        
-        if (rAngle != 0) {
-          ang = 360 + ang - rAngle;
-        }
+        // if (rAngle != 0) {
+        //   ang = 360 + ang - rAngle;
+        // }
       }
       else if (ROBOT.x <= dest.x && ROBOT.y <= dest.y) {
-        if (rAngle != 0) {
-          ang = ang - rAngle;
-        }
+        // if (rAngle != 0) {
+        //   ang = ang - rAngle;
+        // }
       }
       else if (ROBOT.x >= dest.x && ROBOT.y >= dest.y) {       
-        if (rAngle != 0) {
-          ang = ang - rAngle;
-        }
+        // if (rAngle != 0) {
+        //   ang = ang - rAngle;
+        // }
       }
       
       // I like to move it move it
-      drv.turnFor((ang), rotationUnits::deg, vel, velocityUnits::pct);
+      drv.turnFor(1, rotationUnits::deg, vel, velocityUnits::pct);
       drv.driveFor(distToMove, distanceUnits::cm, vel, velocityUnits::pct);
 
       // Update robot position
