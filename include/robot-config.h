@@ -9,7 +9,8 @@ extern motor gripper;
 extern motor liftgrip;
 extern motor lift;
 extern motor minilift;
-extern inertial Inertial10;
+extern encoder leftEncoder;
+extern encoder rightEncoder;
 
 /**
  * Used to initialize code/tasks/devices added using tools in VEXcode Pro.

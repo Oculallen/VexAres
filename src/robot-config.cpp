@@ -18,9 +18,10 @@ drivetrain Drivetrain = drivetrain(LeftDriveSmart, RightDriveSmart, 319.19, 385,
 controller Controller1 = controller(primary);
 motor gripper = motor(PORT12, ratio18_1, true);
 motor liftgrip = motor(PORT15, ratio18_1, false);
-motor lift = motor(PORT14, ratio18_1, true);
+motor lift = motor(PORT14, ratio36_1, true);
 motor minilift = motor(PORT16, ratio18_1, false);
-inertial Inertial10 = inertial(PORT10);
+encoder leftEncoder = encoder(Brain.ThreeWirePort.A);
+encoder rightEncoder = encoder(Brain.ThreeWirePort.C);
 
 // VEXcode generated functions
 // define variable for remote controller enable/disable

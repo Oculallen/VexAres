@@ -7,7 +7,8 @@
 // liftgrip             motor         15              
 // lift                 motor         14              
 // minilift             motor         16              
-// Inertial10           inertial      10              
+// leftEncoder          encoder       A, B            
+// rightEncoder         encoder       C, D            
 // ---- END VEXCODE CONFIGURED DEVICES ----
 /*----------------------------------------------------------------------------*/
 /*                                                                            */
@@ -52,15 +53,16 @@ class Coord{
 class FieldMap{
   //20 x 20 pitch (0-20)
   //Square worth 4 coord
-  //sqaure 600mm
-  //1 coord 150mm same as base radius
+  //sqaure = 600mm
+  //1 coord = 150mm same as base radius
   public:
     Coord ROBOT = Coord(0, 0);
     double rAngle = 0;
 
+    //Constant starting positions of items on the field.
     const Coord BIG_MID = Coord(10, 10);
     const Coord LEFT_MID = Coord(4, 10);
-    const Coord RIGHT_MID = Coord(17, 10);
+    const Coord RIGHT_MID = Coord(18, 10);
     const Coord ALLIANCE_PLAT = Coord(15, 0);
     const Coord ALLAIANCE_FLOOR = Coord(0, 4);
 
@@ -69,32 +71,50 @@ class FieldMap{
       double nang = calcAngle(dest);
       double ang = nang;
 
-      // Big Block of angle checking code, pls don't touch otherwise i'll get mad.
+      // Angle manipulation code, ensures the robot turns the correct amount relative to its position.
       if (ROBOT.x > dest.x && ROBOT.y < dest.y) {
         ang = ang - (ang*2);
-        // if (rAngle != 0) {
-        //   ang = 360 + ang - rAngle;
-        // }
+        if (rAngle + (ang*-2) > 360) {
+          ang = (rAngle + (ang*-2)) - 360;
+        }
+        else{
+          if (rAngle + (ang*-2) > 180) {
+            ang = 360 - rAngle + (ang*-2);
+          }
+          else {
+            ang = (rAngle + (ang*-2)) * -1;
+          }
+        }
+        ang = ang - (ang*2);
       }
       else if (ROBOT.x < dest.x && ROBOT.y > dest.y) {
         ang = ang - (ang*2);        
-        // if (rAngle != 0) {
-        //   ang = 360 + ang - rAngle;
-        // }
+        if (rAngle + (ang*-2) > 360) {
+          ang = (rAngle + (ang*-2)) - 360;
+        }
+        else{
+          if (rAngle + (ang*-2) > 180) {
+            ang = 360 - rAngle + (ang*-2);
+          }
+          else {
+            ang = (rAngle + (ang*-2)) * -1;
+          }
+        }
+        ang = ang - (ang*2);
       }
       else if (ROBOT.x <= dest.x && ROBOT.y <= dest.y) {
-        // if (rAngle != 0) {
-        //   ang = ang - rAngle;
-        // }
+        if (rAngle != 0) {
+          ang = ang - rAngle;
+        }
       }
       else if (ROBOT.x >= dest.x && ROBOT.y >= dest.y) {       
-        // if (rAngle != 0) {
-        //   ang = ang - rAngle;
-        // }
+        if (rAngle != 0) {
+          ang = ang - rAngle;
+        }
       }
       
-      // I like to move it move it
-      drv.turnFor(1, rotationUnits::deg, vel, velocityUnits::pct);
+      // Move the robot
+      drv.turnFor(ang, rotationUnits::deg, vel, velocityUnits::pct);
       drv.driveFor(distToMove, distanceUnits::cm, vel, velocityUnits::pct);
 
       // Update robot position
@@ -139,7 +159,7 @@ class FieldMap{
       double X = ROBOT.x - dest.x;
       double Y = ROBOT.y - dest.y;
 
-      double angleRadian = atan2(X, Y);
+      double angleRadian = atan(X / Y);
       ang = angleRadian * (180 / M_PI);
 
       return ang;
@@ -379,9 +399,23 @@ void autonSeqOne(void){
   setMotorPos(minilift, 1500, 110);
   
   map.moveToCoords(Drivetrain, map.RIGHT_MID, 70);
-  minilift.spinTo(1100, rotationUnits::deg, 60, velocityUnits::pct);
-  map.moveToCoords(Drivetrain, Coord(17, 0), 30);
+  minilift.spinTo(1200, rotationUnits::deg, 20, velocityUnits::pct);
+  Drivetrain.driveFor(60, distanceUnits::cm, 50, velocityUnits::pct);
 } 
+
+void autonSeqTwo(void){
+  setMotorPos(minilift, 1500, 110);
+  Drivetrain.driveFor(-150, distanceUnits::cm, 90, velocityUnits::pct);
+  minilift.spinTo(1200, rotationUnits::deg, 30, velocityUnits::pct);
+  Drivetrain.driveFor(100, distanceUnits::cm, 60, velocityUnits::pct);
+}
+
+void autonSeqThree(void){
+  setMotorPos(minilift, 1500, 110);
+  Drivetrain.driveFor(-125, distanceUnits::cm, 90, velocityUnits::pct);
+  minilift.spinTo(1100, rotationUnits::deg, 30, velocityUnits::pct);
+  Drivetrain.driveFor(100, distanceUnits::cm, 60, velocityUnits::pct);
+}
 
 void usercontrol(void) {
   coastdrive();
@@ -409,7 +443,7 @@ void usercontrol(void) {
 
 
 int main() {
-  Competition.autonomous(autonSeqOne);
+  Competition.autonomous(autonSeqThree);
   Competition.drivercontrol(usercontrol);
 
   pre_auton();
