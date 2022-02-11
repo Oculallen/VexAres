@@ -7,8 +7,6 @@
 // liftgrip             motor         15              
 // lift                 motor         14              
 // minilift             motor         16              
-// leftEncoder          encoder       A, B            
-// rightEncoder         encoder       C, D            
 // ---- END VEXCODE CONFIGURED DEVICES ----
 /*----------------------------------------------------------------------------*/
 /*                                                                            */
@@ -19,20 +17,15 @@
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
 
-// ---- START VEXCODE CONFIGURED DEVICES ----
-// Robot Configuration:
-// [Name]               [Type]        [Port(s)]
-// Drivetrain           drivetrain    19, 18, 20, 17  
-// Controller1          controller                    
-// gripper              motor         12              
-// liftgrip             motor         15              
-// lift                 motor         14              
-// minilift             motor         16              
-// Inertial10           inertial      10              
-// ---- END VEXCODE CONFIGURED DEVICES ----
-
 #include "vex.h"
 #include <stdlib.h>
+#include <vector>
+#include <thread>
+#include <chrono>
+#include <fstream>
+#include <iostream>
+#include <ostream>
+#include <cstdlib>
 
 using namespace vex;
 #include <cmath>
@@ -50,119 +43,64 @@ class Coord{
     }
 };
 
-class FieldMap{
-  //20 x 20 pitch (0-20)
-  //Square worth 4 coord
-  //sqaure = 600mm
-  //1 coord = 150mm same as base radius
+class State{
   public:
-    Coord ROBOT = Coord(0, 0);
-    double rAngle = 0;
+    int stick;
+    bool btnThrottle;
+    bool btnReverse;
+    bool btnBoost;
+    bool btnPowerslide;
+    bool btnFlipOn;
+    bool btnFlipOff;
+    int liftPos;
+    bool grip;
+    bool bgrip;
+    bool lgrip;
 
-    //Constant starting positions of items on the field.
-    const Coord BIG_MID = Coord(10, 10);
-    const Coord LEFT_MID = Coord(4, 10);
-    const Coord RIGHT_MID = Coord(18, 10);
-    const Coord ALLIANCE_PLAT = Coord(15, 0);
-    const Coord ALLAIANCE_FLOOR = Coord(0, 4);
+    State(int nstick, bool nbtnThrottle, bool nbtnReverse, bool nbtnBoost, bool nbtnPowerslide, bool nbtnFlipOn, bool nbtnFlipOff, int liftAxis, bool br, bool bb, bool by) {
+      stick = nstick;
+      btnThrottle = nbtnThrottle;
+      btnReverse = nbtnReverse;
+      btnBoost = nbtnBoost;
+      btnPowerslide = nbtnPowerslide;
+      btnFlipOn = nbtnFlipOn;
+      btnFlipOff = nbtnFlipOff;
+      liftPos = liftAxis;
+      grip = br;
+      bgrip = bb;
+      lgrip = by;
+    }
+};
 
-    void moveToCoords(vex::drivetrain drv, Coord dest, double vel){
-      double distToMove = calcDistance(dest);
-      double nang = calcAngle(dest);
-      double ang = nang;
+class Recording {
+  public:
+    std::vector<State> frames;
 
-      // Angle manipulation code, ensures the robot turns the correct amount relative to its position.
-      if (ROBOT.x > dest.x && ROBOT.y < dest.y) {
-        ang = ang - (ang*2);
-        if (rAngle + (ang*-2) > 360) {
-          ang = (rAngle + (ang*-2)) - 360;
-        }
-        else{
-          if (rAngle + (ang*-2) > 180) {
-            ang = 360 - rAngle + (ang*-2);
-          }
-          else {
-            ang = (rAngle + (ang*-2)) * -1;
-          }
-        }
-        ang = ang - (ang*2);
-      }
-      else if (ROBOT.x < dest.x && ROBOT.y > dest.y) {
-        ang = ang - (ang*2);        
-        if (rAngle + (ang*-2) > 360) {
-          ang = (rAngle + (ang*-2)) - 360;
-        }
-        else{
-          if (rAngle + (ang*-2) > 180) {
-            ang = 360 - rAngle + (ang*-2);
-          }
-          else {
-            ang = (rAngle + (ang*-2)) * -1;
-          }
-        }
-        ang = ang - (ang*2);
-      }
-      else if (ROBOT.x <= dest.x && ROBOT.y <= dest.y) {
-        if (rAngle != 0) {
-          ang = ang - rAngle;
-        }
-      }
-      else if (ROBOT.x >= dest.x && ROBOT.y >= dest.y) {       
-        if (rAngle != 0) {
-          ang = ang - rAngle;
-        }
-      }
-      
-      // Move the robot
-      drv.turnFor(ang, rotationUnits::deg, vel, velocityUnits::pct);
-      drv.driveFor(distToMove, distanceUnits::cm, vel, velocityUnits::pct);
-
-      // Update robot position
-      ROBOT = dest;
-      if (nang < 0) {
-        rAngle = 360 + nang;
-      }
-      else {
-        rAngle = nang;
-      }
+    void record(){
+      frames.push_back(State(Controller1.Axis4.position(), // stick
+      Controller1.ButtonR2.pressing(), // throttle
+      Controller1.ButtonL2.pressing(), // reverse
+      Controller1.ButtonR1.pressing(), // boost
+      Controller1.ButtonL1.pressing(), // powerslide
+      Controller1.ButtonDown.pressing(), // flipped driving on
+      Controller1.ButtonUp.pressing(),
+      Controller1.Axis2.position(),
+      Controller1.ButtonRight.pressing(),
+      Controller1.ButtonB.pressing(),
+      Controller1.ButtonY.pressing()));
     }
 
-    FieldMap(Coord nRobot, double nAngle){
-      ROBOT = nRobot;
-      rAngle = nAngle;
-    };
+    //Fancy insert and extraction processes for saving a recording
+    friend std::ostream& operator<<(std::ostream& os, const Recording& rec){
+      for (int i = 0; i < frames.size(); i++)
 
-  private:
-    double calcDistance(Coord dest){
-      double dist;
-
-      double X = ROBOT.x - dest.x;
-      double Y = ROBOT.y - dest.y;
-      double x = pow(X, 2);
-      double y = pow(Y, 2);
-
-      dist = sqrt(x + y);
-      if (dist < 0){
-        dist = dist + (dist*-2);
-      }
-      else {
-        dist = dist - (dist*2);
-      }
-      dist = dist * 12;
-
-      return dist;
+      return os;
     }
 
-    double calcAngle(Coord dest){
-      double ang;
-      
-      double X = ROBOT.x - dest.x;
-      double Y = ROBOT.y - dest.y;
+    friend std::istream& operator>>(std::istream& is, const Recording& rec){
 
-      double angleRadian = atan(X / Y);
-      ang = angleRadian * (180 / M_PI);
 
-      return ang;
+      return is;
     }
 };
 
@@ -191,6 +129,26 @@ const double GRIP_DOWN = 60;
 // Scale constant for setting motors
 const int SCALE = 120;
 
+void record(){
+  Recording nRec = Recording();
+  bool onoroff = false;
+  while(true){
+    if(Controller1.ButtonR1.pressing() && Controller1.ButtonA.pressing() && Controller1.ButtonX.pressing()) {
+      if (onoroff == false) {
+        onoroff = true;
+      }
+      else {
+        onoroff = false;
+      }
+    }
+    if (onoroff == true) {
+      nRec.record();
+    }
+    this_thread::sleep_for(std::chrono::milliseconds(50));
+  }
+}
+
+thread rec(record);
 
 double linterp(double y0, double y1, double x, double x0, double x1) {
   return (y0 * (x1 - x) + y1 * (x - x0)) / (x1 - x0);
@@ -367,7 +325,9 @@ void motorSetup(){
   }
 
   // Nudge section to make sure nothing collides with anything nasty (mostly that darn side gripper)
-  setMotorPos(gripper, 5, GRIP_VEL); // setGripPos(5, GRIP_VEL);
+  setMotorPos(gripper, 5, GRIP_VEL); // setGripP
+  minilift.setVelocity(MINILIFT_VEL, percent);
+  liftgrip.setVelocity(LIFTGRIP_VEL, percent);
   setMotorPos(lift, -2, MIN_LIFT_VEL); // setLiftPos(-2, MIN_LIFT_VEL);
   setMotorPos(minilift, 10, MINILIFT_VEL);
   gripper.resetPosition();
@@ -380,8 +340,6 @@ void pre_auton(void) {
   vexcodeInit();
 
   gripper.setVelocity(GRIP_VEL, percent);
-  minilift.setVelocity(MINILIFT_VEL, percent);
-  liftgrip.setVelocity(LIFTGRIP_VEL, percent);
   //motorSetup();
 }
 
@@ -395,12 +353,7 @@ void auton(void) {
 // - Moves back to get blue plat
 ///
 void autonSeqOne(void){
-  FieldMap map(Coord(20, 0), 0);
-  setMotorPos(minilift, 1500, 110);
   
-  map.moveToCoords(Drivetrain, map.RIGHT_MID, 70);
-  minilift.spinTo(1200, rotationUnits::deg, 20, velocityUnits::pct);
-  Drivetrain.driveFor(60, distanceUnits::cm, 50, velocityUnits::pct);
 } 
 
 void autonSeqTwo(void){
@@ -419,6 +372,7 @@ void autonSeqThree(void){
 
 void usercontrol(void) {
   coastdrive();
+  bool recOn = false;
 
   while(true) {
     rlDrivePlus(
